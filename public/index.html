@@ -1,0 +1,211 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <title>アリバイ生成アプリ</title>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+  <style>
+    body {
+      background: #111;
+      color: white;
+      font-family: sans-serif;
+      text-align: center;
+      padding: 20px;
+    }
+
+    select, input, button {
+      margin: 5px;
+      padding: 8px;
+      font-size: 16px;
+    }
+
+    #timelineContainer {
+      margin-top: 20px;
+      overflow-x: auto;
+      border: 2px solid #555;
+      padding: 10px;
+    }
+
+    .timelineRow {
+      display: flex;
+      align-items: center;
+      margin-bottom: 15px;
+    }
+
+    .characterLabel {
+      width: 100px;
+      text-align: right;
+      margin-right: 10px;
+      font-weight: bold;
+      color: #0300a0;
+    }
+
+    .eventTrack {
+      display: flex;
+      flex-wrap: nowrap;
+      position: relative;
+    }
+
+    .eventBox {
+      background: #333;
+      border: 1px solid #777;
+      border-radius: 10px;
+      margin: 2px;
+      padding: 5px;
+      min-width: 100px;
+      text-align: center;
+      position: relative;
+    }
+
+    .eventBox .time {
+      color: #ffd700;
+      font-weight: bold;
+    }
+
+    .eventBox .place {
+      font-style: italic;
+      color: #aaf0d1;
+    }
+
+    .eventBox button {
+      position: absolute;
+      top: 0;
+      right: 5px;
+      background: red;
+      color: white;
+      border: none;
+      border-radius: 50%;
+      width: 20px;
+      height: 20px;
+      font-size: 12px;
+      cursor: pointer;
+    }
+
+    .timeGrid {
+      position: absolute;
+      top: 0;
+      left: 0;
+      height: 100%;
+      width: 10000px;
+      z-index: -1;
+      display: flex;
+    }
+
+    .timeCell {
+      width: 100px;
+      /* border-left: 1px solid #444; 削除 */
+      color: #444;
+      font-size: 12px;
+      text-align: center;
+    }
+  </style>
+</head>
+<body>
+
+  <h1>アリバイ生成アプリ</h1>
+
+  <select id="character">
+    <option value="">キャラクターを選択または入力</option>
+  </select>
+  <input type="text" id="characterInput" placeholder="新しいキャラ名">
+
+  <select id="time">
+    <option value="">時間を選択または入力</option>
+  </select>
+  <input type="text" id="timeInput" placeholder="新しい時間 例: 13:00">
+
+  <select id="placeSelect">
+    <option value="">場所や行動等を入力</option>
+  </select>
+  <input type="text" id="placeInput" placeholder="新しい場所や行動等">
+
+  <button onclick="addEvent()">追加</button>
+  <button onclick="saveImage()">画像として保存</button>
+
+  <div id="timelineContainer">
+    <div id="timelineArea"></div>
+  </div>
+
+  <script>
+    const timelines = {};
+    const characters = new Set();
+    const times = new Set();
+    const places = new Set();
+
+    function addOptionIfNew(set, selectId, value) {
+      if (!set.has(value)) {
+        set.add(value);
+        const opt = document.createElement("option");
+        opt.value = value;
+        opt.textContent = value;
+        document.getElementById(selectId).appendChild(opt);
+      }
+    }
+
+    function addEvent() {
+      const char = document.getElementById("characterInput").value || document.getElementById("character").value;
+      const time = document.getElementById("timeInput").value || document.getElementById("time").value;
+      const place = document.getElementById("placeInput").value || document.getElementById("placeSelect").value;
+
+      if (!char || !time || !place) {
+        alert("全ての項目を入力または選択してください");
+        return;
+      }
+
+      addOptionIfNew(characters, "character", char);
+      addOptionIfNew(times, "time", time);
+      addOptionIfNew(places, "placeSelect", place);
+
+      if (!timelines[char]) {
+        createCharacterRow(char);
+      }
+
+      const event = document.createElement("div");
+      event.className = "eventBox";
+      event.innerHTML = `<div class="time">${time}</div><div class="place">${place}</div><button onclick=\"this.parentElement.remove()\">&times;</button>`;
+
+      document.getElementById(`track-${char}`).appendChild(event);
+
+      document.getElementById("characterInput").value = '';
+      document.getElementById("timeInput").value = '';
+      document.getElementById("placeInput").value = '';
+    }
+
+    function createCharacterRow(name) {
+      const row = document.createElement("div");
+      row.className = "timelineRow";
+
+      const label = document.createElement("div");
+      label.className = "characterLabel";
+      label.textContent = name;
+
+      const track = document.createElement("div");
+      track.className = "eventTrack";
+      track.id = `track-${name}`;
+
+      const grid = createTimeGrid();
+      track.appendChild(grid);
+
+      row.appendChild(label);
+      row.appendChild(track);
+      document.getElementById("timelineArea").appendChild(row);
+      timelines[name] = true;
+    }
+
+    function createTimeGrid() {
+      const grid = document.createElement("div");
+
+      return grid;
+    }
+
+    function saveImage() {
+      html2canvas(document.getElementById("timelineContainer")).then(canvas => {
+        const link = document.createElement("a");
+        link.download = 'alibi_timeline.png';
+        link.href = canvas.toDataURL();
+        link.click();
+      });
+    }
+  </script>
+</body>
+</html>
